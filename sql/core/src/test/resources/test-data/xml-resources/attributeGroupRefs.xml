@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <xs:attributeGroup name="AttributeGroup1">
+        <xs:attribute name="attr1" type="xs:string" />
+        <xs:attribute name="attr2" type="xs:integer" />
+    </xs:attributeGroup>
+
+    <xs:element name="RootElement">
+        <xs:complexType>
+            <xs:attributeGroup ref="AttributeGroup1" />
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Step 3: Another Element Using the Same Attribute Group -->
+    <xs:element name="AnotherElement">
+        <xs:complexType>
+            <xs:attributeGroup ref="AttributeGroup1" />
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

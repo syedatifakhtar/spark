@@ -294,4 +294,24 @@ class XSDToSchemaSuite extends SharedSparkSession {
       false) :: Nil)
     assert(parsedSchema === expectedSchema)
   }
+
+  test("Parse attribute group refs") {
+    val parsedSchema = XSDToSchema.read(new
+        Path(testFile(resDir + "attributeGroupRefs.xml")))
+    val expectedSchema = StructType(
+      StructField("RootElement",
+        StructType(
+          StructField("_attr1", StringType) ::
+          StructField("_attr2", DecimalType(38, 0)) :: Nil
+          ),
+      nullable = false) :: StructField("AnotherElement",
+        StructType(
+          StructField("_attr1", StringType) ::
+            StructField("_attr2", DecimalType(38, 0)) :: Nil
+        ),
+        nullable = false) :: Nil)
+    assert(expectedSchema === parsedSchema)
+    parsedSchema
+  }
+
 }

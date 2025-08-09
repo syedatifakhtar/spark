@@ -68,6 +68,25 @@ object XSDToSchema extends Logging{
 
 
   private def getStructField(xmlSchema: XmlSchema, schemaType: XmlSchemaType): StructField = {
+    def extractAttributes(attribute: XmlSchemaAttributeOrGroupRef): Seq[StructField] = {
+      attribute match {
+        case matchedAttribute: XmlSchemaAttribute =>
+          val attributeType = matchedAttribute.getSchemaTypeName match {
+            case null =>
+              StringType
+            case t =>
+              getStructField(xmlSchema, xmlSchema.getParent.getTypeByQName(t)).dataType
+          }
+          Seq(StructField(s"_${matchedAttribute.getName}", attributeType,
+            matchedAttribute.getUse != XmlSchemaUse.REQUIRED))
+        case attributeGroupRef: XmlSchemaAttributeGroupRef =>
+          xmlSchema.getParent.getAttributeGroupByQName(attributeGroupRef.getTargetQName).
+            getAttributes.asScala.toSeq.flatMap {
+              case attribute: XmlSchemaAttributeOrGroupRef => extractAttributes(attribute)
+            }
+      }
+    }
+
     schemaType match {
       // xs:simpleType
       case simpleType: XmlSchemaSimpleType =>
@@ -164,17 +183,8 @@ object XSDToSchema extends Logging{
             }
           case null =>
             val childFields = getStructFieldsFromParticle(complexType.getParticle, xmlSchema)
-            val attributes = complexType.getAttributes.asScala.map {
-              case attribute: XmlSchemaAttribute =>
-                val attributeType = attribute.getSchemaTypeName match {
-                  case null =>
-                    StringType
-                  case t =>
-                    getStructField(xmlSchema, xmlSchema.getParent.getTypeByQName(t)).dataType
-                }
-                StructField(s"_${attribute.getName}", attributeType,
-                  attribute.getUse != XmlSchemaUse.REQUIRED)
-            }.toSeq
+            val attributeList = complexType.getAttributes.asScala
+            val attributes = attributeList.toSeq.flatMap(attr => extractAttributes(attr))
             StructField(complexType.getName, StructType(childFields ++ attributes))
           case unsupported =>
             throw new IllegalArgumentException(s"Unsupported content model: $unsupported")
